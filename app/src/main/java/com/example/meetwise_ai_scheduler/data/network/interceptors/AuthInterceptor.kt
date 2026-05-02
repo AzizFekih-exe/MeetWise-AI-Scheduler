@@ -13,20 +13,19 @@ import javax.inject.Inject
  * and automatically attach the JWT token to the headers.
  */
 class AuthInterceptor @Inject constructor(
-    // We will later inject a TokenManager (Task 4) here.
-    // For now, we simulate it.
+    private val tokenManager: TokenManager
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         
-        // Simulating fetching a token. In Task 4, this comes from EncryptedSharedPreferences.
-        val token = "YOUR_JWT_TOKEN_PLACEHOLDER"
+        // Fetch the actual token from EncryptedSharedPreferences
+        val token = tokenManager.getToken()
 
         val requestBuilder = originalRequest.newBuilder()
         
         // If we have a token, attach it using the "Bearer" schema
-        if (token.isNotEmpty()) {
+        if (!token.isNullOrEmpty()) {
             requestBuilder.addHeader("Authorization", "Bearer $token")
         }
 
