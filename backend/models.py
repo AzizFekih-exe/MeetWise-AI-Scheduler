@@ -15,6 +15,17 @@ class User(Base):
 
     meetings_created = relationship("Meeting", back_populates="creator")
     availability = relationship("Availability", back_populates="user")
+    devices = relationship("UserDevice", back_populates="user")
+
+class UserDevice(Base):
+    __tablename__ = "user_devices"
+
+    deviceId = Column(Integer, primary_key=True, index=True)
+    userId = Column(Integer, ForeignKey("users.userId"), nullable=False)
+    fcmToken = Column(String, unique=True, nullable=False)
+    registeredAt = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="devices")
 
 class Meeting(Base):
     __tablename__ = "meetings"

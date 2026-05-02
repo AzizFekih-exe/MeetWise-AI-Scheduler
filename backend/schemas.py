@@ -11,6 +11,10 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
 class UserResponse(UserBase):
     userId: int
     createdAt: datetime
@@ -58,3 +62,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     userId: Optional[int] = None
+
+# Transcription Schemas
+class TranscriptionJobResponse(BaseModel):
+    jobId: str

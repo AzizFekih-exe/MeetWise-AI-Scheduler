@@ -30,10 +30,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @router.post("/login", response_model=schemas.Token)
-def login(user_credentials: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Note: Using UserCreate schema for login for simplicity here, 
-    # but normally you'd use a dedicated Login schema (email/password only).
-    
+def login(user_credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user_credentials.email).first()
     
     if not db_user or not auth_utils.verify_password(user_credentials.password, db_user.passwordHash):

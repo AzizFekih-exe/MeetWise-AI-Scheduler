@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from typing import List
 from database import get_db
 from dependencies import get_current_user
 import models, schemas
+import uuid
+import os
+import shutil
+from tasks import process_audio_task
 
 
 router = APIRouter(prefix="/meetings", tags=["Meetings"])
@@ -74,3 +78,40 @@ def create_meeting(
     db.commit()
     db.refresh(new_meeting)
     return new_meeting
+
+@router.post("/{meeting_id}/transcribe", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.TranscriptionJobResponse)
+def transcribe_meeting(
+    meeting_id: int,
+    background_tasks: BackgroundTasks,
+    audio_file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Initiate transcription for a meeting. Returns a job ID immediately.
+    """
+    meeting = db.query(models.Meeting).filter(models.Meeting.meetingId == meeting_id).first()
+    if not meeting:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
+        
+    job_id = str(uuid.uuid4())
+    
+    # Save file to temp directory
+    temp_dir = os.path.join(os.getcwd(), "temp")
+    os.makedirs(temp_dir, exist_ok=True)
+    file_ext = audio_file.filename.split('.')[-1] if '.' in audio_file.filename else 'm4a'
+    file_path = os.path.join(temp_dir, f"job_{job_id}.{file_ext}")
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(audio_file.file, buffer)
+        
+    # Queue background task
+    background_tasks.add_task(
+        process_audio_task,
+        job_id=job_id,
+        meeting_id=meeting_id,
+        file_path=file_path,
+        user_id=current_user.userId
+    )
+    
+    return {"jobId": job_id}
