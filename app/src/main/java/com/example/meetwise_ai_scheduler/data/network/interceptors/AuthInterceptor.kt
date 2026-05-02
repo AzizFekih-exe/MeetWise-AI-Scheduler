@@ -1,5 +1,6 @@
 package com.example.meetwise_ai_scheduler.data.network.interceptors
 
+import com.example.meetwise_ai_scheduler.domain.repository.TokenManager
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "324994074126",
+    "project_id": "meetwise-ae174",
+    "storage_bucket": "meetwise-ae174.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:324994074126:android:6658fa313825e47dd71e5f",
+        "android_client_info": {
+          "package_name": "com.example.meetwise_ai_scheduler"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzbPzNQXOyiLJwD41htNTdYLU-Gfi-ge8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
