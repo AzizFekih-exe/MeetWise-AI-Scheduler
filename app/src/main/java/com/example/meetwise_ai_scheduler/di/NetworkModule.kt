@@ -1,5 +1,7 @@
 package com.example.meetwise_ai_scheduler.di
 
+import com.example.meetwise_ai_scheduler.data.network.AuthApiService
+import com.example.meetwise_ai_scheduler.data.network.MeetingApiService
 import com.example.meetwise_ai_scheduler.data.network.interceptors.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -49,5 +51,17 @@ object NetworkModule {
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create()) // Converts JSON from FastAPI to Kotlin objects
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
+        return retrofit.create(AuthApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMeetingApiService(retrofit: Retrofit): MeetingApiService {
+        return retrofit.create(MeetingApiService::class.java)
     }
 }
