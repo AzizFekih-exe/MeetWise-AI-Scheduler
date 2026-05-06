@@ -187,3 +187,29 @@ def transcribe_meeting(
     )
     
     return {"jobId": job_id}
+
+@router.get("/{meeting_id}/minutes", response_model=schemas.MinutesResponse)
+def get_meeting_minutes(
+    meeting_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Retrieve the generated minutes for a specific meeting.
+    """
+    minutes = db.query(models.Minutes).filter(models.Minutes.meetingId == meeting_id).first()
+    
+    if not minutes:
+        raise HTTPException(status_code=404, detail="Minutes not found for this meeting")
+    
+    # Optional: Check if the user was a participant in the meeting
+    participant = db.query(models.Participant).filter(
+        models.Participant.meetingId == meeting_id,
+        models.Participant.userId == current_user.userId
+    ).first()
+    
+    if not participant and meeting_id not in [m.meetingId for m in current_user.meetings_created]:
+        raise HTTPException(status_code=403, detail="You do not have access to these minutes")
+        
+    return minutes
+
