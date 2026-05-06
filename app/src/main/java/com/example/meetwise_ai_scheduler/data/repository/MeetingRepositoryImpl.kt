@@ -59,4 +59,13 @@ class MeetingRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun deleteMeeting(meetingId: String): Result<Unit> {
+        return try {
+            apiService.deleteMeeting(meetingId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

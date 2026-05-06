@@ -22,4 +22,7 @@ interface MeetingRepository {
     
     // Confirm a specific slot and finalize the meeting
     suspend fun confirmMeeting(meeting: Meeting, selectedSlot: ScoredSlot): Result<Unit>
+
+    // Delete a meeting
+    suspend fun deleteMeeting(meetingId: String): Result<Unit>
 }

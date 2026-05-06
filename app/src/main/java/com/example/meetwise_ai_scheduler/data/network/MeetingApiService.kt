@@ -27,6 +27,9 @@ interface MeetingApiService {
     @POST("api/v1/meetings/{id}/confirm")
     suspend fun confirmMeeting(
         @Path("id") meetingId: String,
-        @Body slotId: String // Or a confirmation object depending on backend
+        @Body slotId: String 
     )
+
+    @DELETE("api/v1/meetings/{id}")
+    suspend fun deleteMeeting(@Path("id") meetingId: String)
 }
