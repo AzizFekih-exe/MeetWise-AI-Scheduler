@@ -8,3 +8,9 @@ app/build/
 captures/
 .externalNativeBuild/
 *.lock
+
+# Backend
+backend/venv/
+backend/.env
+backend/__pycache__/
+backend/*.pyc
