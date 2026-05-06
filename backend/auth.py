@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import get_db
-import models, schemas, auth_utils
+import models, auth_utils
+import meetwise_schemas as schemas
+
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

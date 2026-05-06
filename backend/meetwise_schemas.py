@@ -2,6 +2,11 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 
+# Job/Transcription Schemas (Moved to top to prevent AttributeError)
+class TranscriptionJobResponse(BaseModel):
+    jobId: str
+    status: str
+
 # User Schemas
 class UserBase(BaseModel):
     email: EmailStr
@@ -60,11 +65,6 @@ class MeetingConfirm(BaseModel):
     startTime: datetime
     endTime: datetime
 
-# Job/Transcription Schemas
-class TranscriptionJobResponse(BaseModel):
-    jobId: str
-    status: str
-
 # Minutes Schemas
 class ActionItem(BaseModel):
     task: str
@@ -115,3 +115,7 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     userId: Optional[int] = None
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str

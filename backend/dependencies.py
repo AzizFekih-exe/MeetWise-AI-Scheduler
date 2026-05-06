@@ -4,7 +4,10 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 from database import get_db
 from config import settings
-import models, schemas
+import models
+import meetwise_schemas as schemas
+
+
 
 # OAuth2 scheme for JWT
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")

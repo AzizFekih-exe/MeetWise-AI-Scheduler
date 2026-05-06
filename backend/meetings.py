@@ -4,7 +4,10 @@ from sqlalchemy import or_
 from typing import List
 from database import get_db
 from dependencies import get_current_user
-import models, schemas
+import models
+import meetwise_schemas as schemas
+
+
 import uuid
 import os
 import shutil
@@ -186,7 +189,8 @@ def transcribe_meeting(
         user_id=current_user.userId
     )
     
-    return {"jobId": job_id}
+    return {"jobId": job_id, "status": "pending"}
+
 
 @router.get("/{meeting_id}/minutes", response_model=schemas.MinutesResponse)
 def get_meeting_minutes(
