@@ -26,10 +26,12 @@ def process_audio_task(job_id: str, meeting_id: int, file_path: str, user_id: in
         # 3. Save to database
         new_minutes = models.Minutes(
             meetingId=meeting_id,
-            summaryText=minutes_data.get("summaryText", ""),
-            actionItems=minutes_data.get("actionItems", []),
+            summaryText=minutes_data.get("summary", ""),
+            actionItems=minutes_data.get("action_items", []),
+
             rawNotes=transcript
         )
+
         db.add(new_minutes)
         db.commit()
         
