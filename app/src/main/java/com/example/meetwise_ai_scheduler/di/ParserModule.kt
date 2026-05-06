@@ -1,5 +1,6 @@
 package com.example.meetwise_ai_scheduler.di
 
+import com.example.meetwise_ai_scheduler.domain.engine.SlotSuggestionEngine
 import com.example.meetwise_ai_scheduler.domain.parser.DateTimeParser
 import dagger.Module
 import dagger.Provides
@@ -15,5 +16,11 @@ object ParserModule {
     @Singleton
     fun provideDateTimeParser(): DateTimeParser {
         return DateTimeParser()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSlotSuggestionEngine(): SlotSuggestionEngine {
+        return SlotSuggestionEngine()
     }
 }
