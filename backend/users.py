@@ -2,7 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import get_db
 from dependencies import get_current_user
-import models, schemas
+import models
+import meetwise_schemas as schemas
+
+
 
 router = APIRouter(tags=["User Utilities"])
 
