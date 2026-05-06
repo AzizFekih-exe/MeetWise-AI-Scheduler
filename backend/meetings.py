@@ -79,6 +79,75 @@ def create_meeting(
     db.refresh(new_meeting)
     return new_meeting
 
+@router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_meeting(
+    meeting_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Cancel a meeting. Only the creator can perform this action.
+    """
+    meeting = db.query(models.Meeting).filter(models.Meeting.meetingId == meeting_id).first()
+    
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    
+    if meeting.createdBy != current_user.userId:
+        raise HTTPException(status_code=403, detail="Only the organizer can cancel the meeting")
+    
+    meeting.status = "cancelled"
+    db.commit()
+    
+    # TODO: Trigger FCM notification to participants here in Task 7
+    return None
+
+@router.get("/{meeting_id}/slots", response_model=List[schemas.SlotSuggestion])
+def get_meeting_slots(
+    meeting_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Return hardcoded slot suggestions (Shell for Task 5).
+    """
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    
+    # Returning 3 hardcoded slots
+    return [
+        {"startTime": now + timedelta(days=1, hours=9), "endTime": now + timedelta(days=1, hours=10), "score": 0.95},
+        {"startTime": now + timedelta(days=1, hours=14), "endTime": now + timedelta(days=1, hours=15), "score": 0.82},
+        {"startTime": now + timedelta(days=2, hours=10), "endTime": now + timedelta(days=2, hours=11), "score": 0.75}
+    ]
+
+@router.post("/{meeting_id}/confirm", response_model=schemas.MeetingResponse)
+def confirm_meeting_slot(
+    meeting_id: int,
+    confirmation: schemas.MeetingConfirm,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Confirm a specific slot for the meeting.
+    """
+    meeting = db.query(models.Meeting).filter(models.Meeting.meetingId == meeting_id).first()
+    
+    if not meeting:
+        raise HTTPException(status_code=404, detail="Meeting not found")
+    
+    if meeting.createdBy != current_user.userId:
+        raise HTTPException(status_code=403, detail="Only the organizer can confirm the meeting")
+    
+    meeting.dateTime = confirmation.startTime
+    meeting.status = "confirmed"
+    
+    db.commit()
+    db.refresh(meeting)
+    
+    # TODO: Dispatch Google Calendar invites here
+    return meeting
+
 @router.post("/{meeting_id}/transcribe", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.TranscriptionJobResponse)
 def transcribe_meeting(
     meeting_id: int,
@@ -94,7 +163,10 @@ def transcribe_meeting(
     if not meeting:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
         
+    from tasks import process_audio_task, jobs_status
+    
     job_id = str(uuid.uuid4())
+    jobs_status[job_id] = "pending"
     
     # Save file to temp directory
     temp_dir = os.path.join(os.getcwd(), "temp")

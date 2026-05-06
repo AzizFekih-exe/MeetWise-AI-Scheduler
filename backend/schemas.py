@@ -54,14 +54,20 @@ class MeetingResponse(MeetingBase):
     class Config:
         from_attributes = True
 
-# Token Schemas
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+# Slot Schemas
+class SlotSuggestion(BaseModel):
+    startTime: datetime
+    endTime: datetime
+    score: float
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
-    userId: Optional[int] = None
+class MeetingConfirm(BaseModel):
+    startTime: datetime
+    endTime: datetime
+
+# Job/Transcription Schemas
+class TranscriptionJobResponse(BaseModel):
+    jobId: str
+    status: str
 
 # Transcription Schemas
 class TranscriptionJobResponse(BaseModel):
