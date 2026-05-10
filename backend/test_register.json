@@ -1,0 +1,6 @@
+{
+    "email": "test@example.com",
+    "name": "John Doe",
+    "password": "secret123",
+    "timezone": "UTC"
+}
