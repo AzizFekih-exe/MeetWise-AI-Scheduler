@@ -10,23 +10,24 @@ import com.google.gson.annotations.SerializedName
 
 data class LoginRequest(
     @SerializedName("email") val email: String,
-    @SerializedName("firebase_token") val firebaseToken: String
+    @SerializedName("password") val password: String
 )
 
 data class LoginResponse(
     @SerializedName("access_token") val accessToken: String,
-    @SerializedName("token_type") val tokenType: String,
-    @SerializedName("user") val user: UserDto
+    @SerializedName("token_type") val tokenType: String
 )
 
 data class RegisterRequest(
     @SerializedName("email") val email: String,
     @SerializedName("name") val name: String,
-    @SerializedName("firebase_uid") val firebaseUid: String
+    @SerializedName("password") val password: String,
+    @SerializedName("timezone") val timezone: String = "UTC"
 )
 
 data class UserDto(
-    @SerializedName("id") val id: String,
+    @SerializedName("userId") val id: Int,
     @SerializedName("name") val name: String,
-    @SerializedName("email") val email: String
+    @SerializedName("email") val email: String,
+    @SerializedName("timezone") val timezone: String
 )

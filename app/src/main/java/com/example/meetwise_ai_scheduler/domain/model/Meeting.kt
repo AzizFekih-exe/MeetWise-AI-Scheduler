@@ -15,7 +15,8 @@ data class Meeting(
     val location: String?,
     val status: String, // 'scheduled', 'confirmed', 'completed', 'cancelled'
     val createdBy: String,
-    val participants: List<Participant> = emptyList()
+    val participants: List<Participant> = emptyList(),
+    val participantEmails: List<String> = emptyList()
 )
 
 data class Participant(

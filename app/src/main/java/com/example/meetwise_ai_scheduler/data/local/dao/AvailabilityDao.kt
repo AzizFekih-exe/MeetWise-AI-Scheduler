@@ -10,11 +10,11 @@ interface AvailabilityDao {
     fun getAvailabilityForUser(userId: Int): Flow<List<AvailabilityEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAvailability(availability: AvailabilityEntity)
+    suspend fun insertAvailability(availability: AvailabilityEntity): Long
 
     @Delete
-    suspend fun deleteAvailability(availability: AvailabilityEntity)
+    suspend fun deleteAvailability(availability: AvailabilityEntity): Int
 
     @Query("DELETE FROM availability WHERE userId = :userId")
-    suspend fun clearAvailabilityForUser(userId: Int)
+    suspend fun clearAvailabilityForUser(userId: Int): Int
 }

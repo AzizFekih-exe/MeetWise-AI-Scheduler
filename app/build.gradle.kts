@@ -1,10 +1,26 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
 }
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use(::load)
+    }
+}
+
+val apiBaseUrl = providers.gradleProperty("API_BASE_URL").orNull
+    ?: localProperties.getProperty("api.base.url")
+    ?: "http://10.0.2.2:8000/"
+
+fun String.asBuildConfigString() = "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 android {
     namespace = "com.example.meetwise_ai_scheduler"
@@ -20,9 +36,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    ksp {
+        arg("room.generateKotlin", "true")
+    }
+
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", apiBaseUrl.asBuildConfigString())
+        }
+
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "API_BASE_URL", apiBaseUrl.asBuildConfigString())
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -30,11 +55,15 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlin {
+        jvmToolchain(17)
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

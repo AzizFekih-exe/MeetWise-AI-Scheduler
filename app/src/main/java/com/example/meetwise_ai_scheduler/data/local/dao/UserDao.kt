@@ -6,8 +6,8 @@ import com.example.meetwise_ai_scheduler.data.local.entities.UserEntity
 @Dao
 interface UserDao {
     @Insert
-    suspend fun insertUser(user: UserEntity)
+    suspend fun insertUser(user: UserEntity): Long
 
     @Delete
-    suspend fun deleteUser(user: UserEntity)
+    suspend fun deleteUser(user: UserEntity): Int
 }

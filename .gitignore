@@ -1,4 +1,6 @@
 .gradle/
+.gradle-home/
+.gradle-project-cache/
 .idea/
 build/
 local.properties
@@ -13,4 +15,7 @@ captures/
 backend/venv/
 backend/.env
 backend/__pycache__/
-backend/*.pyc
+backend/**/__pycache__/
+backend/outbox/
+backend/*.db
+backend/*.pyc

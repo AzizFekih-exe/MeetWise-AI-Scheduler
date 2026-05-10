@@ -1,5 +1,6 @@
 package com.example.meetwise_ai_scheduler.di
 
+import com.example.meetwise_ai_scheduler.BuildConfig
 import com.example.meetwise_ai_scheduler.data.network.AuthApiService
 import com.example.meetwise_ai_scheduler.data.network.MeetingApiService
 import com.example.meetwise_ai_scheduler.data.network.interceptors.AuthInterceptor
@@ -16,9 +17,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
-    // For Task 17, we will use BuildConfig.API_BASE_URL. For now, we use a placeholder.
-    private const val BASE_URL = "https://api.meetwise.example.com/"
 
     @Provides
     @Singleton
@@ -47,7 +45,7 @@ object NetworkModule {
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         // Retrofit maps our Kotlin functions to the FastAPI endpoints.
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.API_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create()) // Converts JSON from FastAPI to Kotlin objects
             .build()

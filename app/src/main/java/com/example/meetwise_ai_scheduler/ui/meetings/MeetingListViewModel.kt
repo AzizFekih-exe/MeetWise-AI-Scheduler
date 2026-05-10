@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -45,12 +46,34 @@ class MeetingListViewModel @Inject constructor(
 
     fun deleteMeeting(meetingId: String) {
         viewModelScope.launch {
+            val currentState = _uiState.value as? MeetingListUiState.Success
+            if (currentState != null) {
+                _uiState.value = currentState.copy(
+                    meetings = currentState.meetings.map { meeting ->
+                        if (meeting.meetingId == meetingId) {
+                            meeting.copy(status = "cancelled")
+                        } else {
+                            meeting
+                        }
+                    }
+                )
+            }
+
             meetingRepository.deleteMeeting(meetingId).fold(
                 onSuccess = {
-                    loadMeetings() // Refresh the list
+                    delay(3000)
+                    val latestState = _uiState.value as? MeetingListUiState.Success
+                    if (latestState != null) {
+                        _uiState.value = latestState.copy(
+                            meetings = latestState.meetings.filterNot { it.meetingId == meetingId }
+                        )
+                    } else {
+                        loadMeetings()
+                    }
                 },
-                onFailure = {
-                    // Handle error (e.g. show toast)
+                onFailure = { error ->
+                    _uiState.value = MeetingListUiState.Error(error.message ?: "Failed to cancel meeting")
+                    loadMeetings()
                 }
             )
         }

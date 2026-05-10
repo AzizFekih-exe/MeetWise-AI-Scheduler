@@ -12,6 +12,7 @@ import uuid
 import os
 import shutil
 from tasks import process_audio_task
+from services.email_service import send_meeting_cancelled_email, send_meeting_scheduled_email
 
 
 router = APIRouter(prefix="/meetings", tags=["Meetings"])
@@ -31,6 +32,8 @@ def list_meetings(
             models.Meeting.createdBy == current_user.userId,
             models.Participant.userId == current_user.userId
         )
+    ).filter(
+        models.Meeting.status != "cancelled"
     ).distinct().all()
     
     return meetings
@@ -65,10 +68,16 @@ def create_meeting(
     )
     db.add(organizer)
     
+    recipient_emails = {current_user.email}
+
     # 3. Add other participants
     for user_id in meeting_data.participants:
         if user_id == current_user.userId:
             continue  # Already added as organizer
+
+        invited_user = db.query(models.User).filter(models.User.userId == user_id).first()
+        if invited_user:
+            recipient_emails.add(invited_user.email)
             
         participant = models.Participant(
             meetingId=new_meeting.meetingId,
@@ -77,9 +86,44 @@ def create_meeting(
             status="pending"
         )
         db.add(participant)
+
+    processed_invite_emails = set()
+    for email in meeting_data.participantEmails:
+        normalized_email = str(email).lower()
+        if normalized_email in processed_invite_emails:
+            continue
+        processed_invite_emails.add(normalized_email)
+        recipient_emails.add(normalized_email)
+        db.add(models.MeetingInviteEmail(
+            meetingId=new_meeting.meetingId,
+            email=normalized_email,
+        ))
+        invited_user = db.query(models.User).filter(models.User.email == normalized_email).first()
+        if invited_user and invited_user.userId != current_user.userId:
+            participant_exists = db.query(models.Participant).filter(
+                models.Participant.meetingId == new_meeting.meetingId,
+                models.Participant.userId == invited_user.userId,
+            ).first()
+            if not participant_exists:
+                db.add(models.Participant(
+                    meetingId=new_meeting.meetingId,
+                    userId=invited_user.userId,
+                    role="participant",
+                    status="pending"
+                ))
     
     db.commit()
     db.refresh(new_meeting)
+
+    for recipient_email in sorted(recipient_emails):
+        send_meeting_scheduled_email(
+            recipient_email=recipient_email,
+            meeting_title=new_meeting.title,
+            meeting_time=new_meeting.dateTime.isoformat(),
+            duration_minutes=new_meeting.duration,
+            location=new_meeting.location,
+        )
+
     return new_meeting
 
 @router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -98,11 +142,37 @@ def cancel_meeting(
     
     if meeting.createdBy != current_user.userId:
         raise HTTPException(status_code=403, detail="Only the organizer can cancel the meeting")
-    
+
+    recipient_emails = set()
+    creator = db.query(models.User).filter(models.User.userId == meeting.createdBy).first()
+    if creator:
+        recipient_emails.add(creator.email)
+
+    participant_user_ids = [
+        participant.userId
+        for participant in db.query(models.Participant).filter(models.Participant.meetingId == meeting_id).all()
+    ]
+    if participant_user_ids:
+        participant_users = db.query(models.User).filter(models.User.userId.in_(participant_user_ids)).all()
+        recipient_emails.update(user.email for user in participant_users)
+
+    invite_rows = db.query(models.MeetingInviteEmail).filter(
+        models.MeetingInviteEmail.meetingId == meeting_id
+    ).all()
+    recipient_emails.update(invite.email for invite in invite_rows)
+
     meeting.status = "cancelled"
     db.commit()
-    
-    # TODO: Trigger FCM notification to participants here in Task 7
+
+    for recipient_email in sorted(email.lower() for email in recipient_emails if email):
+        send_meeting_cancelled_email(
+            recipient_email=recipient_email,
+            meeting_title=meeting.title,
+            meeting_time=meeting.dateTime.isoformat(),
+            duration_minutes=meeting.duration,
+            location=meeting.location,
+        )
+
     return None
 
 @router.get("/{meeting_id}/slots", response_model=List[schemas.SlotSuggestion])
@@ -166,10 +236,10 @@ def transcribe_meeting(
     if not meeting:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Meeting not found")
         
-    from tasks import process_audio_task, jobs_status
+    from tasks import process_audio_task, set_job_status
     
     job_id = str(uuid.uuid4())
-    jobs_status[job_id] = "pending"
+    set_job_status(job_id, "pending", 0.30, "Audio uploaded. Waiting to transcribe.")
     
     # Save file to temp directory
     temp_dir = os.path.join(os.getcwd(), "temp")

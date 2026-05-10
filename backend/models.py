@@ -40,6 +40,7 @@ class Meeting(Base):
 
     creator = relationship("User", back_populates="meetings_created")
     participants = relationship("Participant", back_populates="meeting")
+    invite_emails = relationship("MeetingInviteEmail", back_populates="meeting")
     minutes = relationship("Minutes", back_populates="meeting", uselist=False)
 
 class Participant(Base):
@@ -51,6 +52,19 @@ class Participant(Base):
     status = Column(String, default="pending")  # accepted, declined, pending
 
     meeting = relationship("Meeting", back_populates="participants")
+
+class MeetingInviteEmail(Base):
+    __tablename__ = "meeting_invite_emails"
+
+    inviteId = Column(Integer, primary_key=True, index=True)
+    meetingId = Column(Integer, ForeignKey("meetings.meetingId"), nullable=False)
+    email = Column(String, nullable=False)
+
+    meeting = relationship("Meeting", back_populates="invite_emails")
+
+    __table_args__ = (
+        UniqueConstraint("meetingId", "email", name="uq_meeting_invite_email"),
+    )
 
 class Availability(Base):
     __tablename__ = "availability"

@@ -3,9 +3,12 @@ package com.example.meetwise_ai_scheduler.ui.meetings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.meetwise_ai_scheduler.domain.model.Meeting
 import java.time.format.DateTimeFormatter
 
@@ -22,18 +28,53 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun MeetingListScreen(
     onNavigateToScheduling: () -> Unit,
+    onNavigateToRecording: (String) -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     viewModel: MeetingListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
-    // Pull-to-refresh state
-    val isRefreshing = uiState is MeetingListUiState.Loading
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.loadMeetings()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Meetings", fontWeight = FontWeight.Bold) }
+                title = { Text("My Meetings", fontWeight = FontWeight.Bold) },
+                actions = {
+                    TextButton(onClick = onToggleTheme) {
+                        Text(if (isDarkTheme) "Light" else "Dark")
+                    }
+                }
             )
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = true,
+                    onClick = { },
+                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                    label = { Text("Home") }
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onNavigateToScheduling,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    label = { Text("Schedule") }
+                )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onNavigateToScheduling) {
@@ -53,13 +94,14 @@ fun MeetingListScreen(
                     }
                 }
                 is MeetingListUiState.Success -> {
-                    if (state.meetings.isEmpty()) {
+                    AnimatedVisibility(visible = state.meetings.isEmpty()) {
                         Text(
                             "No meetings scheduled yet.",
                             modifier = Modifier.align(Alignment.Center),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    } else {
+                    }
+                    AnimatedVisibility(visible = state.meetings.isNotEmpty()) {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
@@ -68,6 +110,7 @@ fun MeetingListScreen(
                             items(state.meetings) { meeting ->
                                 MeetingItem(
                                     meeting = meeting,
+                                    onRecord = { onNavigateToRecording(meeting.meetingId) },
                                     onDelete = { viewModel.deleteMeeting(meeting.meetingId) }
                                 )
                             }
@@ -89,6 +132,7 @@ fun MeetingListScreen(
 @Composable
 fun MeetingItem(
     meeting: Meeting,
+    onRecord: () -> Unit,
     onDelete: () -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("EEE, MMM d")
@@ -96,10 +140,12 @@ fun MeetingItem(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
+                .animateContentSize()
                 .padding(16.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -124,15 +170,26 @@ fun MeetingItem(
                     label = { Text(meeting.status) },
                     colors = SuggestionChipDefaults.suggestionChipColors(
                         containerColor = when(meeting.status.lowercase()) {
-                            "upcoming" -> MaterialTheme.colorScheme.primaryContainer
-                            "completed" -> Color.LightGray // Simplified
+                            "scheduled", "confirmed", "upcoming" -> MaterialTheme.colorScheme.primaryContainer
+                            "completed" -> Color.LightGray
+                            "cancelled" -> MaterialTheme.colorScheme.errorContainer
                             else -> MaterialTheme.colorScheme.errorContainer
                         }
                     )
                 )
             }
 
-            IconButton(onClick = onDelete) {
+            TextButton(
+                onClick = onRecord,
+                enabled = meeting.status.lowercase() != "cancelled"
+            ) {
+                Text("Record")
+            }
+
+            IconButton(
+                onClick = onDelete,
+                enabled = meeting.status.lowercase() != "cancelled"
+            ) {
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = "Delete",

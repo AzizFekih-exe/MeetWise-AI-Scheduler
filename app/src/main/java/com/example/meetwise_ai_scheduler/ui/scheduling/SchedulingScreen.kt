@@ -1,10 +1,14 @@
 package com.example.meetwise_ai_scheduler.ui.scheduling
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,16 +25,41 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchedulingScreen(
+    onNavigateHome: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     viewModel: SchedulingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var query by remember { mutableStateOf("") }
+    var inviteeEmails by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Schedule Meeting", fontWeight = FontWeight.Bold) }
+                title = { Text("Schedule Meeting", fontWeight = FontWeight.Bold) },
+                actions = {
+                    TextButton(onClick = onToggleTheme) {
+                        Text(if (isDarkTheme) "Light" else "Dark")
+                    }
+                }
             )
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = false,
+                    onClick = onNavigateHome,
+                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                    label = { Text("Home") }
+                )
+                NavigationBarItem(
+                    selected = true,
+                    onClick = { },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    label = { Text("Schedule") }
+                )
+            }
         }
     ) { paddingValues ->
         Column(
@@ -52,6 +81,17 @@ fun SchedulingScreen(
                 shape = MaterialTheme.shapes.medium
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = inviteeEmails,
+                onValueChange = { inviteeEmails = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Invite emails, separated by commas") },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Results Section
@@ -67,21 +107,44 @@ fun SchedulingScreen(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
                 is SchedulingUiState.Success -> {
-                    Text(
-                        "Top Recommendations",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(state.suggestedSlots) { scoredSlot ->
-                            SlotCard(
-                                scoredSlot = scoredSlot,
-                                onConfirm = { /* TODO: Confirm logic */ }
-                            )
+                    AnimatedVisibility(visible = true) {
+                        Text(
+                            "All Suggestions",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
+                    state.confirmationMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = if (message == "Meeting scheduled") {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            },
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+
+                    if (state.suggestedSlots.isEmpty()) {
+                        Text(
+                            "No future suggestions match this request.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(state.suggestedSlots) { scoredSlot ->
+                                SlotCard(
+                                    scoredSlot = scoredSlot,
+                                    isConfirming = state.isConfirming,
+                                    onConfirm = { viewModel.confirmSlot(scoredSlot, inviteeEmails) }
+                                )
+                            }
                         }
                     }
                 }
@@ -100,6 +163,7 @@ fun SchedulingScreen(
 @Composable
 fun SlotCard(
     scoredSlot: ScoredSlot,
+    isConfirming: Boolean,
     onConfirm: () -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
@@ -107,6 +171,7 @@ fun SlotCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -114,6 +179,7 @@ fun SlotCard(
     ) {
         Row(
             modifier = Modifier
+                .animateContentSize()
                 .padding(16.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -148,6 +214,7 @@ fun SlotCard(
 
             Button(
                 onClick = onConfirm,
+                enabled = !isConfirming,
                 contentPadding = PaddingValues(horizontal = 16.dp)
             ) {
                 Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))

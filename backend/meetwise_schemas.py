@@ -7,6 +7,13 @@ class TranscriptionJobResponse(BaseModel):
     jobId: str
     status: str
 
+class JobStatusResponse(BaseModel):
+    jobId: str
+    status: str
+    progress: float
+    message: str
+    errorMessage: Optional[str] = None
+
 # User Schemas
 class UserBase(BaseModel):
     email: EmailStr
@@ -46,6 +53,7 @@ class MeetingBase(BaseModel):
 
 class MeetingCreate(MeetingBase):
     participants: List[int] = []  # List of user IDs to invite
+    participantEmails: List[EmailStr] = []  # External or registered emails to notify
 
 class MeetingResponse(MeetingBase):
     meetingId: int

@@ -10,8 +10,8 @@ interface MinutesDao {
     fun getMinutesForMeeting(meetingId: Int): Flow<MinutesEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMinutes(minutes: MinutesEntity)
+    suspend fun insertMinutes(minutes: MinutesEntity): Long
 
     @Query("DELETE FROM minutes WHERE meetingId = :meetingId")
-    suspend fun deleteMinutesForMeeting(meetingId: Int)
+    suspend fun deleteMinutesForMeeting(meetingId: Int): Int
 }

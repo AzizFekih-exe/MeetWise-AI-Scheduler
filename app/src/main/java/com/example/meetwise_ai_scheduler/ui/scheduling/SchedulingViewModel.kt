@@ -2,6 +2,7 @@ package com.example.meetwise_ai_scheduler.ui.scheduling
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.meetwise_ai_scheduler.domain.model.Meeting
 import com.example.meetwise_ai_scheduler.domain.model.MeetingIntent
 import com.example.meetwise_ai_scheduler.domain.model.ScoredSlot
 import com.example.meetwise_ai_scheduler.domain.parser.DateTimeParser
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.Duration
 import javax.inject.Inject
 
 /**
@@ -22,7 +24,9 @@ sealed class SchedulingUiState {
     object Loading : SchedulingUiState()
     data class Success(
         val intent: MeetingIntent,
-        val suggestedSlots: List<ScoredSlot>
+        val suggestedSlots: List<ScoredSlot>,
+        val isConfirming: Boolean = false,
+        val confirmationMessage: String? = null
     ) : SchedulingUiState()
     data class Error(val message: String) : SchedulingUiState()
 }
@@ -53,7 +57,14 @@ class SchedulingViewModel @Inject constructor(
         }
 
         // Phase 1: Parse the natural language locally
-        val intent = dateTimeParser.parse(query)
+        val intent = try {
+            dateTimeParser.parse(query)
+        } catch (e: Exception) {
+            _uiState.value = SchedulingUiState.Error(
+                e.message ?: "Could not understand this scheduling request"
+            )
+            return
+        }
         
         if (intent != null) {
             // Phase 2: If we have a valid intent, fetch real slots from the repository
@@ -75,6 +86,48 @@ class SchedulingViewModel @Inject constructor(
                 onFailure = { error ->
                     _uiState.value = SchedulingUiState.Error(
                         error.message ?: "Failed to fetch suggestions"
+                    )
+                }
+            )
+        }
+    }
+
+    fun confirmSlot(scoredSlot: ScoredSlot, inviteeEmailsText: String) {
+        val currentState = _uiState.value as? SchedulingUiState.Success ?: return
+        val inviteeEmails = inviteeEmailsText
+            .split(",", ";", " ", "\n")
+            .map { it.trim().lowercase() }
+            .filter { it.isNotBlank() }
+            .distinct()
+
+        viewModelScope.launch {
+            _uiState.value = currentState.copy(isConfirming = true, confirmationMessage = null)
+
+            val meeting = Meeting(
+                meetingId = "",
+                title = currentState.intent.title ?: "Meeting",
+                dateTime = scoredSlot.slot.startDateTime,
+                durationMinutes = Duration.between(
+                    scoredSlot.slot.startDateTime,
+                    scoredSlot.slot.endDateTime
+                ).toMinutes().toInt(),
+                location = null,
+                status = "scheduled",
+                createdBy = "",
+                participantEmails = inviteeEmails
+            )
+
+            meetingRepository.createMeeting(meeting).fold(
+                onSuccess = {
+                    _uiState.value = currentState.copy(
+                        isConfirming = false,
+                        confirmationMessage = "Meeting scheduled"
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = currentState.copy(
+                        isConfirming = false,
+                        confirmationMessage = error.message ?: "Failed to schedule meeting"
                     )
                 }
             )

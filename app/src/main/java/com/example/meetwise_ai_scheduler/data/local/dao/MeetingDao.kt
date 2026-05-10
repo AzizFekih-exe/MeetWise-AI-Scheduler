@@ -6,8 +6,8 @@ import com.example.meetwise_ai_scheduler.data.local.entities.MeetingEntity
 @Dao
 interface MeetingDao {
     @Insert
-    suspend fun insertMeeting(meeting: MeetingEntity)
+    suspend fun insertMeeting(meeting: MeetingEntity): Long
 
     @Delete
-    suspend fun deleteMeeting(meeting: MeetingEntity)
+    suspend fun deleteMeeting(meeting: MeetingEntity): Int
 }

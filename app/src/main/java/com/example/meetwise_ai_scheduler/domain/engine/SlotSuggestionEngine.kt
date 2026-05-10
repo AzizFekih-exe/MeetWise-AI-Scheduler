@@ -34,7 +34,6 @@ class SlotSuggestionEngine {
         return possibleSlots.map { slot ->
             calculateScore(slot, existingMeetings, mostFrequentHour)
         }.sortedByDescending { it.score }
-         .take(3) 
     }
 
     private fun findPossibleSlots(

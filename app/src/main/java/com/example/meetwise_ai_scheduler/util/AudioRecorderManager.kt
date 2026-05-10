@@ -5,7 +5,6 @@ import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
 import java.io.File
-import java.io.FileOutputStream
 
 class AudioRecorderManager(private val context: Context) {
 
@@ -20,7 +19,7 @@ class AudioRecorderManager(private val context: Context) {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setOutputFile(FileOutputStream(outputFile).fd)
+            setOutputFile(outputFile.absolutePath)
             
             try {
                 prepare()
