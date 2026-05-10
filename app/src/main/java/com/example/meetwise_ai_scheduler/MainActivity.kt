@@ -22,11 +22,19 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var darkTheme by remember { mutableStateOf(false) }
+            val preferences = remember {
+                getSharedPreferences("meetwise_preferences", MODE_PRIVATE)
+            }
+            var darkTheme by remember {
+                mutableStateOf(preferences.getBoolean("dark_theme", false))
+            }
             MeetWiseAISchedulerTheme(darkTheme = darkTheme) {
                 NavGraph(
                     isDarkTheme = darkTheme,
-                    onToggleTheme = { darkTheme = !darkTheme }
+                    onToggleTheme = {
+                        darkTheme = !darkTheme
+                        preferences.edit().putBoolean("dark_theme", darkTheme).apply()
+                    }
                 )
             }
         }

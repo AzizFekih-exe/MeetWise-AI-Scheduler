@@ -21,7 +21,9 @@ fun MinutesScreen(
     minutes: Minutes,
     onBackToMeetings: () -> Unit,
     onExportPdf: () -> Unit,
+    onExportAudio: () -> Unit,
     onShare: () -> Unit,
+    canExportAudio: Boolean,
     onToggleActionItem: (ActionItem) -> Unit
 ) {
     Scaffold(
@@ -96,6 +98,16 @@ fun MinutesScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Export as PDF")
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onExportAudio,
+                    enabled = canExportAudio,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Export Audio")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }

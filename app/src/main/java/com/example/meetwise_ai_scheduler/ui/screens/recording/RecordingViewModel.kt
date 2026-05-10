@@ -7,6 +7,7 @@ import com.example.meetwise_ai_scheduler.domain.repository.MeetingRepository
 import com.example.meetwise_ai_scheduler.util.AudioRecorderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import android.os.Environment
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,13 +37,15 @@ class RecordingViewModel @Inject constructor(
 
     fun startRecording() {
         if (_uiState.value.isRecording) return
-        val file = File(context.cacheDir, "meetwise_recording_${System.currentTimeMillis()}.m4a")
+        val recordingsRoot = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC) ?: context.filesDir
+        val recordingsDir = File(recordingsRoot, "MeetWise Recordings").apply { mkdirs() }
+        val file = File(recordingsDir, "meetwise_recording_${System.currentTimeMillis()}.m4a")
         outputFile = file
         recorder.startRecording(file)
         _uiState.value = RecordingUiState(isRecording = true)
     }
 
-    fun stopAndUpload(meetingId: String, onUploaded: (String) -> Unit) {
+    fun stopAndUpload(meetingId: String, onUploaded: (jobId: String, audioFilePath: String) -> Unit) {
         val file = outputFile
         recorder.stopRecording()
 
@@ -67,7 +70,7 @@ class RecordingViewModel @Inject constructor(
                     _uiState.value = RecordingUiState(isUploading = true, uploadProgress = 0.30f)
                     delay(250)
                     _uiState.value = RecordingUiState()
-                    onUploaded(jobId)
+                    onUploaded(jobId, file.absolutePath)
                 },
                 onFailure = { error ->
                     progressJob.cancel()

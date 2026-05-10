@@ -25,7 +25,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun RecordingScreen(
     meetingId: String,
-    onUploaded: (String) -> Unit,
+    onUploaded: (jobId: String, audioFilePath: String) -> Unit,
     viewModel: RecordingViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
