@@ -1,11 +1,26 @@
 package com.example.meetwise_ai_scheduler.ui.navigation
 
 import android.content.Intent
+import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -45,12 +61,36 @@ sealed class Screen(val route: String) {
 @Composable
 fun NavGraph(
     isDarkTheme: Boolean,
-    onToggleTheme: () -> Unit
+    largeText: Boolean,
+    reduceMotion: Boolean,
+    onToggleTheme: () -> Unit,
+    onToggleLargeText: () -> Unit,
+    onToggleReduceMotion: () -> Unit
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
     var selectedMinutes by remember { mutableStateOf<Minutes?>(null) }
     var selectedAudioFilePath by rememberSaveable { mutableStateOf<String?>(null) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    val enterDuration = if (reduceMotion) 90 else 520
+    val exitDuration = if (reduceMotion) 70 else 320
+    fun shareFile(file: File, mimeType: String, chooserTitle: String) {
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = mimeType
+            data = uri
+            putExtra(Intent.EXTRA_STREAM, uri)
+            putExtra(Intent.EXTRA_TITLE, file.name)
+            clipData = android.content.ClipData.newUri(context.contentResolver, file.name, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, chooserTitle))
+    }
+
     fun exportMinutes(minutes: Minutes) {
         val file = PdfExportManager(context).exportMinutesToPdf(
             minutes = minutes,
@@ -61,17 +101,7 @@ fun NavGraph(
             return
         }
 
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        context.startActivity(Intent.createChooser(shareIntent, "Export meeting minutes"))
+        shareFile(file, "application/pdf", "Export meeting minutes")
     }
 
     fun exportAudio(audioFilePath: String?) {
@@ -81,44 +111,70 @@ fun NavGraph(
             return
         }
 
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
+        val extension = file.extension.lowercase()
+        val mimeType = MimeTypeMap.getSingleton()
+            .getMimeTypeFromExtension(extension)
+            ?: "audio/mp4"
+        shareFile(file, mimeType, "Export meeting recording")
+    }
+
+    if (showSettings) {
+        MeetWiseSettingsDialog(
+            isDarkTheme = isDarkTheme,
+            largeText = largeText,
+            reduceMotion = reduceMotion,
+            onToggleTheme = onToggleTheme,
+            onToggleLargeText = onToggleLargeText,
+            onToggleReduceMotion = onToggleReduceMotion,
+            onDismiss = { showSettings = false }
         )
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "audio/mp4"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        context.startActivity(Intent.createChooser(shareIntent, "Export meeting recording"))
     }
     
     NavHost(
         navController = navController,
         startDestination = Screen.Auth.route,
         enterTransition = {
-            fadeIn(animationSpec = tween(220)) + slideIntoContainer(
+            fadeIn(animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)) +
+            scaleIn(
+                initialScale = if (reduceMotion) 0.99f else 0.94f,
+                animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)
+            ) +
+            slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(220)
+                animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)
             )
         },
         exitTransition = {
-            fadeOut(animationSpec = tween(160)) + slideOutOfContainer(
+            fadeOut(animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)) +
+            scaleOut(
+                targetScale = if (reduceMotion) 0.99f else 0.97f,
+                animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)
+            ) +
+            slideOutOfContainer(
                 AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(160)
+                animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)
             )
         },
         popEnterTransition = {
-            fadeIn(animationSpec = tween(220)) + slideIntoContainer(
+            fadeIn(animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)) +
+            scaleIn(
+                initialScale = if (reduceMotion) 0.99f else 0.94f,
+                animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)
+            ) +
+            slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Right,
-                animationSpec = tween(220)
+                animationSpec = tween(enterDuration, easing = FastOutSlowInEasing)
             )
         },
         popExitTransition = {
-            fadeOut(animationSpec = tween(160)) + slideOutOfContainer(
+            fadeOut(animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)) +
+            scaleOut(
+                targetScale = if (reduceMotion) 0.99f else 0.97f,
+                animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)
+            ) +
+            slideOutOfContainer(
                 AnimatedContentTransitionScope.SlideDirection.Right,
-                animationSpec = tween(160)
+                animationSpec = tween(exitDuration, easing = FastOutSlowInEasing)
             )
         }
     ) {
@@ -139,19 +195,34 @@ fun NavGraph(
                 onNavigateToRecording = { meetingId ->
                     navController.navigate(Screen.Recording.createRoute(meetingId))
                 },
+                onOpenMinutes = { minutes ->
+                    selectedMinutes = minutes
+                    selectedAudioFilePath = null
+                    navController.navigate(Screen.Minutes.route)
+                },
+                onLogout = {
+                    navController.navigate(Screen.Auth.route) {
+                        popUpTo(Screen.MeetingList.route) { inclusive = true }
+                    }
+                },
+                onContactSupport = {
+                    Toast.makeText(context, "Support: meetwise.help@gmail.com", Toast.LENGTH_LONG).show()
+                },
                 isDarkTheme = isDarkTheme,
-                onToggleTheme = onToggleTheme
+                onOpenSettings = { showSettings = true }
             )
         }
         composable(Screen.Scheduling.route) {
             SchedulingScreen(
                 onNavigateHome = {
-                    navController.navigate(Screen.MeetingList.route) {
-                        popUpTo(Screen.MeetingList.route) { inclusive = true }
+                    val popped = navController.popBackStack(Screen.MeetingList.route, inclusive = false)
+                    if (!popped) {
+                        navController.navigate(Screen.MeetingList.route)
                     }
                 },
                 isDarkTheme = isDarkTheme,
-                onToggleTheme = onToggleTheme
+                reduceMotion = reduceMotion,
+                onOpenSettings = { showSettings = true }
             )
         }
         composable(
@@ -205,5 +276,75 @@ fun NavGraph(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MeetWiseSettingsDialog(
+    isDarkTheme: Boolean,
+    largeText: Boolean,
+    reduceMotion: Boolean,
+    onToggleTheme: () -> Unit,
+    onToggleLargeText: () -> Unit,
+    onToggleReduceMotion: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Settings") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                SettingsToggleRow(
+                    title = "Dark theme",
+                    description = "Use the darker MeetWise interface",
+                    checked = isDarkTheme,
+                    onCheckedChange = { onToggleTheme() }
+                )
+                HorizontalDivider()
+                SettingsToggleRow(
+                    title = "Larger text",
+                    description = "Increase text size across the app",
+                    checked = largeText,
+                    onCheckedChange = { onToggleLargeText() }
+                )
+                HorizontalDivider()
+                SettingsToggleRow(
+                    title = "Reduced motion",
+                    description = "Use shorter screen transitions",
+                    checked = reduceMotion,
+                    onCheckedChange = { onToggleReduceMotion() }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Done")
+            }
+        }
+    )
+}
+
+@Composable
+private fun SettingsToggleRow(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = androidx.compose.ui.Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = androidx.compose.ui.Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

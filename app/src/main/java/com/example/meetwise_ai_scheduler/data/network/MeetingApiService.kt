@@ -34,6 +34,9 @@ interface MeetingApiService {
     @GET("api/v1/meetings/{id}/minutes")
     suspend fun getMinutes(@Path("id") meetingId: String): MinutesDto
 
+    @GET("api/v1/meetings/minutes/history")
+    suspend fun getRecordedMinutes(): List<MinutesDto>
+
     // Fetch suggested slots for a pending meeting
     @GET("api/v1/meetings/{id}/slots")
     suspend fun getSuggestedSlots(@Path("id") meetingId: String): List<SlotDto>

@@ -1,5 +1,6 @@
 package com.example.meetwise_ai_scheduler.ui.scheduling
 
+import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.meetwise_ai_scheduler.domain.model.Meeting
@@ -95,10 +96,18 @@ class SchedulingViewModel @Inject constructor(
     fun confirmSlot(scoredSlot: ScoredSlot, inviteeEmailsText: String) {
         val currentState = _uiState.value as? SchedulingUiState.Success ?: return
         val inviteeEmails = inviteeEmailsText
-            .split(",", ";", " ", "\n")
+            .split(Regex("[,;\\s]+"))
             .map { it.trim().lowercase() }
             .filter { it.isNotBlank() }
             .distinct()
+        val invalidEmails = inviteeEmails.filterNot { Patterns.EMAIL_ADDRESS.matcher(it).matches() }
+
+        if (invalidEmails.isNotEmpty()) {
+            _uiState.value = currentState.copy(
+                confirmationMessage = "Check invite email: ${invalidEmails.first()}"
+            )
+            return
+        }
 
         viewModelScope.launch {
             _uiState.value = currentState.copy(isConfirming = true, confirmationMessage = null)

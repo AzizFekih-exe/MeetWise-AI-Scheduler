@@ -34,4 +34,6 @@ interface MeetingRepository {
     suspend fun getTranscriptionStatus(jobId: String): Result<TranscriptionJobStatus>
 
     suspend fun getMinutes(meetingId: String): Result<Minutes>
+
+    suspend fun getRecordedMinutes(): Result<List<Minutes>>
 }

@@ -1,9 +1,13 @@
 package com.example.meetwise_ai_scheduler.data.repository
 
 import com.example.meetwise_ai_scheduler.data.network.MeetingApiService
+import com.example.meetwise_ai_scheduler.data.local.Converters
+import com.example.meetwise_ai_scheduler.data.local.dao.MinutesDao
+import com.example.meetwise_ai_scheduler.data.local.entities.MinutesEntity
 import com.example.meetwise_ai_scheduler.data.network.model.CreateMeetingRequest
 import com.example.meetwise_ai_scheduler.data.network.model.toDomain
 import com.example.meetwise_ai_scheduler.domain.engine.SlotSuggestionEngine
+import com.example.meetwise_ai_scheduler.domain.model.Minutes
 import com.example.meetwise_ai_scheduler.domain.model.Meeting
 import com.example.meetwise_ai_scheduler.domain.model.MeetingIntent
 import com.example.meetwise_ai_scheduler.domain.model.ScoredSlot
@@ -23,10 +27,12 @@ import javax.inject.Singleton
 @Singleton
 class MeetingRepositoryImpl @Inject constructor(
     private val apiService: MeetingApiService,
-    private val engine: SlotSuggestionEngine
+    private val engine: SlotSuggestionEngine,
+    private val minutesDao: MinutesDao
 ) : MeetingRepository {
 
     private val meetWiseZone = ZoneOffset.ofHours(1)
+    private val converters = Converters()
 
     override suspend fun getMeetings(): Result<List<Meeting>> {
         return try {
@@ -215,11 +221,52 @@ class MeetingRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getMinutes(meetingId: String): Result<com.example.meetwise_ai_scheduler.domain.model.Minutes> {
+    override suspend fun getMinutes(meetingId: String): Result<Minutes> {
         return try {
-            Result.success(apiService.getMinutes(meetingId).toDomain())
+            val minutes = apiService.getMinutes(meetingId).toDomain()
+            cacheMinutes(minutes)
+            Result.success(minutes)
+        } catch (e: Exception) {
+            val cachedMinutes = meetingId.toIntOrNull()?.let { minutesDao.getMinutesForMeeting(it) }
+            if (cachedMinutes != null) {
+                Result.success(cachedMinutes.toDomain())
+            } else {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun getRecordedMinutes(): Result<List<Minutes>> {
+        return try {
+            val minutes = apiService.getRecordedMinutes().map { it.toDomain() }
+            minutes.forEach { cacheMinutes(it) }
+            Result.success(minutes)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun cacheMinutes(minutes: Minutes) {
+        minutesDao.insertMinutes(
+            MinutesEntity(
+                minutesId = minutes.minutesId,
+                meetingId = minutes.meetingId,
+                summary = minutes.summary,
+                actionItemsJson = converters.fromActionItemList(minutes.actionItems),
+                generatedAt = minutes.generatedAt,
+                rawNotes = minutes.rawNotes
+            )
+        )
+    }
+
+    private fun MinutesEntity.toDomain(): Minutes {
+        return Minutes(
+            minutesId = minutesId,
+            meetingId = meetingId,
+            summary = summary,
+            actionItems = converters.toActionItemList(actionItemsJson),
+            generatedAt = generatedAt,
+            rawNotes = rawNotes
+        )
     }
 }

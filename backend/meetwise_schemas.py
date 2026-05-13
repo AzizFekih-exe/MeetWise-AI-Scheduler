@@ -91,6 +91,9 @@ class MinutesResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class MinutesHistoryResponse(MinutesResponse):
+    meetingTitle: str
+
 # Availability Schemas
 class AvailabilityBase(BaseModel):
     dayOfWeek: int

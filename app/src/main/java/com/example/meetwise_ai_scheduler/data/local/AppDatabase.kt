@@ -13,7 +13,7 @@ import com.example.meetwise_ai_scheduler.data.local.entities.*
         AvailabilityEntity::class, 
         MinutesEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

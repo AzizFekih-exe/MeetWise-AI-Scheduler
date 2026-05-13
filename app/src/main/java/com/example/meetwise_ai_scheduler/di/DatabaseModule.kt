@@ -1,8 +1,9 @@
 package com.example.meetwise_ai_scheduler.di
 
 import android.content.Context
-// import androidx.room.Room
-// import com.example.meetwise_ai_scheduler.data.local.AppDatabase
+import androidx.room.Room
+import com.example.meetwise_ai_scheduler.data.local.AppDatabase
+import com.example.meetwise_ai_scheduler.data.local.dao.MinutesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,16 +15,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
-    /**
-     * DRAFT FOR NOUTAYLA'S REVIEW
-     * 
-     * This module tells Hilt how to create and provide the Room Database instance.
-     * We make it a Singleton because we only want ONE database connection active across the whole app.
-     * 
-     * Uncomment this once AppDatabase is created.
-     */
-
-    /*
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -31,22 +22,13 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "meetwise_database"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
-    */
 
-    /**
-     * DRAFT FOR DAOs
-     * 
-     * Once the DAOs (like MeetingDao, UserDao) are defined, we provide them here.
-     * This way, our Repositories can just request a `MeetingDao` in their constructor, 
-     * and Hilt will know how to get it from the database.
-     */
-
-    /*
     @Provides
-    fun provideMeetingDao(database: AppDatabase): MeetingDao {
-        return database.meetingDao()
+    fun provideMinutesDao(database: AppDatabase): MinutesDao {
+        return database.minutesDao()
     }
-    */
 }
