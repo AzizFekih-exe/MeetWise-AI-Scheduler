@@ -27,7 +27,10 @@ private val LightColorScheme = lightColorScheme(
     secondary = MeetWiseCyan,
     tertiary = Pink40,
     background = MeetWiseLightBackground,
-    surface = androidx.compose.ui.graphics.Color.White
+    surface = androidx.compose.ui.graphics.Color.White,
+    onBackground = androidx.compose.ui.graphics.Color(0xFF171923),
+    onSurface = androidx.compose.ui.graphics.Color(0xFF171923),
+    onSurfaceVariant = androidx.compose.ui.graphics.Color(0xFF4B5263)
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

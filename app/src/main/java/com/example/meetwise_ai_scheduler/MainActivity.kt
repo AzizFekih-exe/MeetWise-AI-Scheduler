@@ -6,12 +6,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import com.example.meetwise_ai_scheduler.ui.navigation.NavGraph
 import com.example.meetwise_ai_scheduler.ui.theme.MeetWiseAISchedulerTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,14 +31,38 @@ class MainActivity : ComponentActivity() {
             var darkTheme by remember {
                 mutableStateOf(preferences.getBoolean("dark_theme", false))
             }
+            var largeText by remember {
+                mutableStateOf(preferences.getBoolean("large_text", false))
+            }
+            var reduceMotion by remember {
+                mutableStateOf(preferences.getBoolean("reduce_motion", false))
+            }
+            val density = LocalDensity.current
             MeetWiseAISchedulerTheme(darkTheme = darkTheme) {
-                NavGraph(
-                    isDarkTheme = darkTheme,
-                    onToggleTheme = {
-                        darkTheme = !darkTheme
-                        preferences.edit().putBoolean("dark_theme", darkTheme).apply()
-                    }
-                )
+                CompositionLocalProvider(
+                    LocalDensity provides Density(
+                        density = density.density,
+                        fontScale = if (largeText) 1.15f else 1f
+                    )
+                ) {
+                    NavGraph(
+                        isDarkTheme = darkTheme,
+                        largeText = largeText,
+                        reduceMotion = reduceMotion,
+                        onToggleTheme = {
+                            darkTheme = !darkTheme
+                            preferences.edit().putBoolean("dark_theme", darkTheme).apply()
+                        },
+                        onToggleLargeText = {
+                            largeText = !largeText
+                            preferences.edit().putBoolean("large_text", largeText).apply()
+                        },
+                        onToggleReduceMotion = {
+                            reduceMotion = !reduceMotion
+                            preferences.edit().putBoolean("reduce_motion", reduceMotion).apply()
+                        }
+                    )
+                }
             }
         }
     }

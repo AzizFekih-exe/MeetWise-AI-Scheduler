@@ -175,6 +175,38 @@ def cancel_meeting(
 
     return None
 
+@router.get("/minutes/history", response_model=List[schemas.MinutesHistoryResponse])
+def list_minutes_history(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    rows = db.query(models.Minutes, models.Meeting).join(
+        models.Meeting,
+        models.Minutes.meetingId == models.Meeting.meetingId
+    ).join(
+        models.Participant,
+        models.Meeting.meetingId == models.Participant.meetingId,
+        isouter=True
+    ).filter(
+        or_(
+            models.Meeting.createdBy == current_user.userId,
+            models.Participant.userId == current_user.userId
+        )
+    ).order_by(models.Minutes.generatedAt.desc()).distinct().all()
+
+    return [
+        {
+            "minutesId": minutes.minutesId,
+            "meetingId": minutes.meetingId,
+            "meetingTitle": meeting.title,
+            "summaryText": minutes.summaryText,
+            "actionItems": minutes.actionItems or [],
+            "generatedAt": minutes.generatedAt,
+            "rawNotes": minutes.rawNotes,
+        }
+        for minutes, meeting in rows
+    ]
+
 @router.get("/{meeting_id}/slots", response_model=List[schemas.SlotSuggestion])
 def get_meeting_slots(
     meeting_id: int,
