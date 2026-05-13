@@ -37,9 +37,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -48,7 +50,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.delay
 
 @Composable
 fun AuthScreen(
@@ -61,6 +62,7 @@ fun AuthScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showLoginSuccess by remember { mutableStateOf(false) }
+    var loginProgress by remember { mutableFloatStateOf(0f) }
     val loadingPulse = rememberInfiniteTransition(label = "login-pulse")
     val pulseScale by loadingPulse.animateFloat(
         initialValue = 0.92f,
@@ -75,8 +77,17 @@ fun AuthScreen(
     LaunchedEffect(uiState.isLoggedIn) {
         if (uiState.isLoggedIn) {
             showLoginSuccess = true
-            delay(3_000)
+            loginProgress = 0f
+            val durationNanos = 3_000_000_000L
+            val startNanos = withFrameNanos { it }
+            do {
+                val nowNanos = withFrameNanos { it }
+                loginProgress = ((nowNanos - startNanos).toFloat() / durationNanos).coerceIn(0f, 1f)
+            } while (loginProgress < 1f)
             onAuthenticated()
+        } else {
+            showLoginSuccess = false
+            loginProgress = 0f
         }
     }
 
@@ -218,7 +229,20 @@ fun AuthScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        progress = { loginProgress },
+                        modifier = Modifier
+                            .height(46.dp)
+                            .width(46.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "${(loginProgress * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.height(20.dp))
                     Text(
                         "Opening MeetWise",

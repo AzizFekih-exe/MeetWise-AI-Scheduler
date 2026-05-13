@@ -72,6 +72,7 @@ fun NavGraph(
     var selectedMinutes by remember { mutableStateOf<Minutes?>(null) }
     var selectedAudioFilePath by rememberSaveable { mutableStateOf<String?>(null) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var openCalendarOnMeetings by rememberSaveable { mutableStateOf(false) }
     val enterDuration = if (reduceMotion) 90 else 520
     val exitDuration = if (reduceMotion) 70 else 320
     fun shareFile(file: File, mimeType: String, chooserTitle: String) {
@@ -209,12 +210,22 @@ fun NavGraph(
                     Toast.makeText(context, "Support: meetwise.help@gmail.com", Toast.LENGTH_LONG).show()
                 },
                 isDarkTheme = isDarkTheme,
-                onOpenSettings = { showSettings = true }
+                onOpenSettings = { showSettings = true },
+                openCalendar = openCalendarOnMeetings,
+                onCalendarOpened = { openCalendarOnMeetings = false }
             )
         }
         composable(Screen.Scheduling.route) {
             SchedulingScreen(
                 onNavigateHome = {
+                    openCalendarOnMeetings = false
+                    val popped = navController.popBackStack(Screen.MeetingList.route, inclusive = false)
+                    if (!popped) {
+                        navController.navigate(Screen.MeetingList.route)
+                    }
+                },
+                onNavigateCalendar = {
+                    openCalendarOnMeetings = true
                     val popped = navController.popBackStack(Screen.MeetingList.route, inclusive = false)
                     if (!popped) {
                         navController.navigate(Screen.MeetingList.route)

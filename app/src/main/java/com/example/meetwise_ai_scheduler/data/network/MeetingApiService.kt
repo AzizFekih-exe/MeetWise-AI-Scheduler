@@ -9,10 +9,6 @@ import com.example.meetwise_ai_scheduler.data.network.model.MinutesDto
 import okhttp3.MultipartBody
 import retrofit2.http.*
 
-/**
- * Concept: MeetingApiService
- * Retrofit interface for meeting scheduling and transcription endpoints.
- */
 interface MeetingApiService {
 
     @GET("api/v1/meetings/")

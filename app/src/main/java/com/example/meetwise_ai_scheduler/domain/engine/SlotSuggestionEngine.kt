@@ -7,15 +7,6 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-/**
- * Concept: SlotSuggestionEngine (Task 15 & 16)
- * Pure Kotlin logic to calculate and score meeting slots.
- * 
- * Logic:
- * 1. Find all available gaps by subtracting conflicts from availability windows.
- * 2. Score each gap based on preferences, buffers, and history.
- * 3. σ = 0.4·f_preferred + 0.35·f_buffer + 0.25·f_history
- */
 class SlotSuggestionEngine {
 
     fun suggestSlots(
@@ -24,13 +15,11 @@ class SlotSuggestionEngine {
         existingMeetings: List<Meeting>,
         durationMinutes: Int
     ): List<ScoredSlot> {
-        // Phase 1: Intersect availability windows and exclude conflicts
         val possibleSlots = findPossibleSlots(availableWindows, conflicts, durationMinutes)
         
         // Pre-calculate history: find the user's most frequent meeting start hour
         val mostFrequentHour = calculateMostFrequentHour(existingMeetings)
         
-        // Phase 2: Apply the scoring formula
         return possibleSlots.map { slot ->
             calculateScore(slot, existingMeetings, mostFrequentHour)
         }.sortedByDescending { it.score }
@@ -88,7 +77,6 @@ class SlotSuggestionEngine {
     }
 
     private fun calculateBufferFactor(slot: Slot, existingMeetings: List<Meeting>): Double {
-        // Task 15: Give 1.0 if there's at least a 30-min gap before and after
         val bufferThreshold = 30L
         
         for (meeting in existingMeetings) {
@@ -108,7 +96,6 @@ class SlotSuggestionEngine {
     }
 
     private fun calculateHistoryFactor(slot: Slot, mostFrequentHour: Int?): Double {
-        // Task 16: Give 1.0 if the slot starts in the user's most frequent hour
         return if (mostFrequentHour != null && slot.startDateTime.hour == mostFrequentHour) {
             1.0
         } else {

@@ -108,6 +108,8 @@ fun MeetingListScreen(
     onContactSupport: () -> Unit,
     isDarkTheme: Boolean,
     onOpenSettings: () -> Unit,
+    openCalendar: Boolean = false,
+    onCalendarOpened: () -> Unit = {},
     viewModel: MeetingListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -134,6 +136,14 @@ fun MeetingListScreen(
 
     LaunchedEffect(Unit) {
         contentVisible = true
+    }
+
+    LaunchedEffect(openCalendar) {
+        if (openCalendar) {
+            homeTab = HomeTab.Calendar
+            viewModel.showMeetings()
+            onCalendarOpened()
+        }
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -268,24 +278,46 @@ fun MeetingListScreen(
                     .padding(paddingValues)
                     .clipToBounds()
             ) {
-                ScheduleSwipePreview(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            translationX = screenWidthPx + animatedDragOffset
-                            alpha = min(abs(animatedDragOffset) / (screenWidthPx * 0.45f), 1f)
-                        }
-                )
-                DrawerSwipePreview(
-                    modifier = Modifier
-                        .width(292.dp)
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            val progress = min(animatedDragOffset / (screenWidthPx * 0.35f), 1f)
-                            translationX = -292.dp.toPx() + (292.dp.toPx() * progress)
-                            alpha = progress
-                        }
-                )
+                if (homeTab == HomeTab.Meetings && !showingRecorded) {
+                    CalendarSwipePreview(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                translationX = screenWidthPx + animatedDragOffset
+                                alpha = min(abs(animatedDragOffset) / (screenWidthPx * 0.45f), 1f)
+                            }
+                    )
+                } else {
+                    ScheduleSwipePreview(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                translationX = screenWidthPx + animatedDragOffset
+                                alpha = min(abs(animatedDragOffset) / (screenWidthPx * 0.45f), 1f)
+                            }
+                    )
+                }
+                if (homeTab == HomeTab.Calendar && !showingRecorded) {
+                    MeetingsSwipePreview(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                translationX = -screenWidthPx + animatedDragOffset
+                                alpha = min(animatedDragOffset / (screenWidthPx * 0.45f), 1f)
+                            }
+                    )
+                } else {
+                    DrawerSwipePreview(
+                        modifier = Modifier
+                            .width(292.dp)
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                val progress = min(animatedDragOffset / (screenWidthPx * 0.35f), 1f)
+                                translationX = -292.dp.toPx() + (292.dp.toPx() * progress)
+                                alpha = progress
+                            }
+                    )
+                }
 
                 Box(
                     modifier = Modifier
@@ -313,12 +345,27 @@ fun MeetingListScreen(
                                     horizontalDrag = -screenWidthPx
                                     scope.launch {
                                         delay(140)
-                                        onNavigateToScheduling()
+                                        if (homeTab == HomeTab.Meetings && !showingRecorded) {
+                                            homeTab = HomeTab.Calendar
+                                            viewModel.showMeetings()
+                                        } else {
+                                            onNavigateToScheduling()
+                                        }
                                         horizontalDrag = 0f
                                     }
                                 } else if (horizontalDrag > 90f) {
-                                    horizontalDrag = 0f
-                                    scope.launch { drawerState.open() }
+                                    if (homeTab == HomeTab.Calendar && !showingRecorded) {
+                                        horizontalDrag = screenWidthPx
+                                        scope.launch {
+                                            delay(140)
+                                            homeTab = HomeTab.Meetings
+                                            viewModel.showMeetings()
+                                            horizontalDrag = 0f
+                                        }
+                                    } else {
+                                        horizontalDrag = 0f
+                                        scope.launch { drawerState.open() }
+                                    }
                                 } else {
                                     horizontalDrag = 0f
                                 }
@@ -387,6 +434,74 @@ fun MeetingListScreen(
         }
     }
 }
+}
+
+@Composable
+private fun MeetingsSwipePreview(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                Icons.Default.Home,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(42.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                "Meetings",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                "Release to return to meetings",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarSwipePreview(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                Icons.Default.DateRange,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(42.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                "Calendar",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                "Release to view meeting days",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @Composable

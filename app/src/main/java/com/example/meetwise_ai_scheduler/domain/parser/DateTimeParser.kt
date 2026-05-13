@@ -8,15 +8,6 @@ import java.time.ZoneOffset
 import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 
-/**
- * Concept: NLP Parser (Task 7)
- * This class uses Regex to extract structured meeting information from natural language.
- * 
- * Rules:
- * - "tomorrow", "today", "next [day]" -> extracted as LocalDate
- * - "at 2pm", "at 14:00" -> extracted as LocalTime
- * - "for 1 hour", "for 30 mins" -> extracted as duration in minutes
- */
 class DateTimeParser {
 
     private val meetWiseZone = ZoneOffset.ofHours(1)

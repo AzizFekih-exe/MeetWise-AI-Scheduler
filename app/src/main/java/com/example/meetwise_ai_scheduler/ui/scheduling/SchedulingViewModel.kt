@@ -16,10 +16,6 @@ import kotlinx.coroutines.launch
 import java.time.Duration
 import javax.inject.Inject
 
-/**
- * Concept: SchedulingUiState
- * Represents the different visual states of the Scheduling screen.
- */
 sealed class SchedulingUiState {
     object Idle : SchedulingUiState()
     object Loading : SchedulingUiState()
@@ -32,13 +28,6 @@ sealed class SchedulingUiState {
     data class Error(val message: String) : SchedulingUiState()
 }
 
-/**
- * Concept: SchedulingViewModel (Task 12)
- * Coordinates the scheduling flow:
- * 1. Takes natural language input from the UI.
- * 2. Uses DateTimeParser to extract structured intent.
- * 3. Calls MeetingRepository to fetch recommendations.
- */
 @HiltViewModel
 class SchedulingViewModel @Inject constructor(
     private val meetingRepository: MeetingRepository,
@@ -57,7 +46,6 @@ class SchedulingViewModel @Inject constructor(
             return
         }
 
-        // Phase 1: Parse the natural language locally
         val intent = try {
             dateTimeParser.parse(query)
         } catch (e: Exception) {
@@ -68,7 +56,6 @@ class SchedulingViewModel @Inject constructor(
         }
         
         if (intent != null) {
-            // Phase 2: If we have a valid intent, fetch real slots from the repository
             fetchSuggestedSlots(intent)
         } else {
             // If parsing fails, stay in Idle (UI might show "Keep typing...")

@@ -2,11 +2,6 @@ package com.example.meetwise_ai_scheduler.domain.model
 
 import java.time.LocalDateTime
 
-/**
- * Concept: Meeting Domain Model
- * This represents a scheduled meeting. Notice the use of java.time.LocalDateTime,
- * which is available since our minSdk is 26.
- */
 data class Meeting(
     val meetingId: String,
     val title: String,

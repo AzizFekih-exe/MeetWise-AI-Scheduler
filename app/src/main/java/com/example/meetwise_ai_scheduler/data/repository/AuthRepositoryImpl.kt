@@ -8,14 +8,6 @@ import com.example.meetwise_ai_scheduler.domain.repository.AuthRepository
 import com.example.meetwise_ai_scheduler.domain.repository.TokenManager
 import javax.inject.Inject
 
-/**
- * Concept: Repository Implementation
- * This class implements the domain's AuthRepository interface.
- * Here we use the real FirebaseAuth SDK and our TokenManager.
- * 
- * Notice that we convert Firebase Tasks to Coroutines using `.await()`,
- * and we wrap everything in `Result.success` or `Result.failure`.
- */
 class AuthRepositoryImpl @Inject constructor(
     private val authApiService: AuthApiService,
     private val tokenManager: TokenManager
@@ -49,8 +41,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loginWithGoogle(idToken: String): Result<User> {
-        // We will implement Google Sign-In in the next step, as it requires a bit more setup.
-        TODO("Google Sign-In will be implemented next")
+        return Result.failure(UnsupportedOperationException("Google Sign-In is not enabled"))
     }
 
     override suspend fun logout(): Result<Unit> {

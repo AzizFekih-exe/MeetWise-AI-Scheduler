@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -44,6 +45,7 @@ import kotlin.math.min
 @Composable
 fun SchedulingScreen(
     onNavigateHome: () -> Unit,
+    onNavigateCalendar: () -> Unit,
     isDarkTheme: Boolean,
     reduceMotion: Boolean,
     onOpenSettings: () -> Unit,
@@ -96,6 +98,12 @@ fun SchedulingScreen(
                     label = { Text("Home") }
                 )
                 NavigationBarItem(
+                    selected = false,
+                    onClick = onNavigateCalendar,
+                    icon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                    label = { Text("Calendar") }
+                )
+                NavigationBarItem(
                     selected = true,
                     onClick = { },
                     icon = { Icon(Icons.Default.Add, contentDescription = null) },
@@ -110,7 +118,7 @@ fun SchedulingScreen(
                 .padding(paddingValues)
                 .clipToBounds()
         ) {
-            HomeSwipePreview(
+            CalendarSwipePreview(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
@@ -146,7 +154,7 @@ fun SchedulingScreen(
                                 horizontalDrag = screenWidthPx
                                 scope.launch {
                                     delay(if (reduceMotion) 60 else 140)
-                                    onNavigateHome()
+                                    onNavigateCalendar()
                                     horizontalDrag = 0f
                                 }
                             } else {
@@ -264,7 +272,7 @@ fun SchedulingScreen(
 }
 
 @Composable
-private fun HomeSwipePreview(modifier: Modifier = Modifier) {
+private fun CalendarSwipePreview(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.background
@@ -277,20 +285,20 @@ private fun HomeSwipePreview(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                Icons.Default.Home,
+                Icons.Default.DateRange,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(42.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                "Meetings",
+                "Calendar",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                "Release to return home",
+                "Release to view meeting days",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

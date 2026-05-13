@@ -16,11 +16,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class AuthModule {
 
-    /**
-     * Concept: Binds vs Provides
-     * When we have an interface (TokenManager) and an implementation (EncryptedTokenManager)
-     * that we already know how to inject, we use @Binds. It's more efficient than @Provides.
-     */
+
     @Binds
     @Singleton
     abstract fun bindTokenManager(
