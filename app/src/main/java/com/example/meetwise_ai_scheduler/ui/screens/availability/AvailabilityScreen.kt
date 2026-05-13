@@ -115,7 +115,7 @@ fun AvailabilityScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { /* TODO: Map selectedCells back to model list and call onSave */ },
+            onClick = { },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Save Changes")

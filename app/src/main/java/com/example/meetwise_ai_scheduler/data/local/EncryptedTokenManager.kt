@@ -8,12 +8,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Concept: Secure Storage (Task 4)
- * Plain SharedPreferences saves data in an unencrypted XML file.
- * We use AndroidX Security Crypto to encrypt both the keys and values using a MasterKey
- * stored safely in the Android Keystore.
- */
 @Singleton
 class EncryptedTokenManager @Inject constructor(
     @ApplicationContext context: Context
@@ -24,12 +18,10 @@ class EncryptedTokenManager @Inject constructor(
         private const val KEY_TOKEN = "jwt_token"
     }
 
-    // Step 1: Create or retrieve the MasterKey from the Android Keystore
     private val masterKey = MasterKey.Builder(context)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
-    // Step 2: Initialize EncryptedSharedPreferences
     private val sharedPreferences = EncryptedSharedPreferences.create(
         context,
         PREFS_NAME,

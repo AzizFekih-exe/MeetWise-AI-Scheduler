@@ -7,11 +7,6 @@ import com.example.meetwise_ai_scheduler.domain.model.ScoredSlot
 import com.example.meetwise_ai_scheduler.domain.model.TranscriptionJobStatus
 import java.io.File
 
-/**
- * Concept: MeetingRepository
- * This interface defines the contract for all meeting-related operations.
- * It will be implemented in the Data layer using Retrofit (FastAPI) and Room.
- */
 interface MeetingRepository {
     
     // Fetch all meetings for the current user

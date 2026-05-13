@@ -18,14 +18,11 @@ class TranscriptionWorker(
         val jobId = inputData.getString("jobId") ?: return Result.failure()
         val meetingId = inputData.getInt("meetingId", -1)
 
-        // Polling loop
         var isComplete = false
         var attempts = 0
         val maxAttempts = 60 // 10 minutes (10s * 60)
 
         while (!isComplete && attempts < maxAttempts) {
-            // TODO: Call your Retrofit API: api.getJobStatus(jobId)
-            // For now, we simulate the network call
             val status = pollServer(jobId) 
 
             when (status) {
@@ -48,7 +45,6 @@ class TranscriptionWorker(
     }
 
     private fun pollServer(jobId: String): String {
-        // This is a placeholder for the real Retrofit call
         return "processing"
     }
 

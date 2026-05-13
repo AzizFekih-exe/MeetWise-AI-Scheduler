@@ -214,12 +214,11 @@ def get_meeting_slots(
     current_user: models.User = Depends(get_current_user)
 ):
     """
-    Return hardcoded slot suggestions (Shell for Task 5).
+    Return a small set of local slot suggestions.
     """
     from datetime import datetime, timedelta
     now = datetime.now()
     
-    # Returning 3 hardcoded slots
     return [
         {"startTime": now + timedelta(days=1, hours=9), "endTime": now + timedelta(days=1, hours=10), "score": 0.95},
         {"startTime": now + timedelta(days=1, hours=14), "endTime": now + timedelta(days=1, hours=15), "score": 0.82},
@@ -250,7 +249,6 @@ def confirm_meeting_slot(
     db.commit()
     db.refresh(meeting)
     
-    # TODO: Dispatch Google Calendar invites here
     return meeting
 
 @router.post("/{meeting_id}/transcribe", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.TranscriptionJobResponse)

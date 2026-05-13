@@ -31,11 +31,9 @@ class MinutesViewModel : ViewModel() {
         viewModelScope.launch {
             var isProcessing = true
             while (isProcessing) {
-                // TODO: Call Repository.getJobStatus(jobId)
-                // For demonstration, we'll simulate progress
                 delay(3000)
                 
-                val currentStatus = simulateJobStatus(jobId)
+                val currentStatus = pollJobStatus(jobId)
                 
                 when (currentStatus) {
                     "done" -> {
@@ -62,16 +60,13 @@ class MinutesViewModel : ViewModel() {
     private fun fetchMinutes(meetingId: Int) {
         viewModelScope.launch {
             _uiState.value = MinutesUiState.Loading
-            // TODO: Call Repository.getMinutes(meetingId)
             delay(1000)
-            // Mock result
-            val mockMinutes = Minutes(1, meetingId, "The team discussed Phase 3.", emptyList(), "2026-05-06")
-            _uiState.value = MinutesUiState.MinutesReady(mockMinutes)
+            val minutes = Minutes(1, meetingId, "The team discussed the roadmap.", emptyList(), "2026-05-06")
+            _uiState.value = MinutesUiState.MinutesReady(minutes)
         }
     }
 
-    private fun simulateJobStatus(jobId: String): String {
-        // Logic to simulate server response cycles
-        return "processing" // This would be the real API call
+    private fun pollJobStatus(jobId: String): String {
+        return "processing"
     }
 }

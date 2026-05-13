@@ -2,10 +2,6 @@ package com.example.meetwise_ai_scheduler.domain.repository
 
 import com.example.meetwise_ai_scheduler.domain.model.User
 
-/**
- * Concept: UserRepository
- * Defines operations for managing user profiles and metadata.
- */
 interface UserRepository {
     
     // Fetch a user's profile details

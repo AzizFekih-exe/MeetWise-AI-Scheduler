@@ -6,10 +6,6 @@ import com.example.meetwise_ai_scheduler.data.network.model.RegisterRequest
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-/**
- * Concept: AuthApiService
- * Retrofit interface for authentication endpoints.
- */
 interface AuthApiService {
 
     @POST("api/v1/auth/register")
